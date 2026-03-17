@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New Registrations Dashboard — March 2026</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Radix UI Design Tokens ── */
+    :root {
+      --color-bg:        #111113;
+      --color-surface:   #18191b;
+      --color-surface2:  #1f2022;
+      --color-border:    #2e3035;
+      --color-text:      #ededef;
+      --color-muted:     #8b8d98;
+      --color-accent:    #3e63dd;
+      --color-accent2:   #30a46c;
+      --color-accent3:   #e54d2e;
+      --color-accent4:   #f76b15;
+      --color-accent5:   #9e8cfc;
+      --color-accent6:   #12a594;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--color-accent), var(--color-accent5));
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700;
+    }
+    .header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+    .header-meta { font-size: 12px; color: var(--color-muted); }
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(62,99,221,0.15);
+      color: #7b97f4;
+      border: 1px solid rgba(62,99,221,0.3);
+      padding: 4px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #7b97f4; }
+
+    /* ── Layout ── */
+    .main { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 14px;
+    }
+
+    /* ── KPI Strip ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .kpi-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      display: flex; flex-direction: column; gap: 6px;
+      transition: border-color 0.15s;
+    }
+    .kpi-card:hover { border-color: rgba(62,99,221,0.4); }
+    .kpi-label { font-size: 11px; color: var(--color-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; }
+    .kpi-value { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+    .kpi-sub { font-size: 11px; color: var(--color-muted); }
+    .kpi-trend { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; }
+    .up { color: var(--color-accent2); }
+    .down { color: var(--color-accent3); }
+
+    /* ── Chart grid ── */
+    .chart-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .chart-grid-3 {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .chart-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+    }
+    .chart-card.full { width: 100%; margin-bottom: 16px; }
+    .chart-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .chart-desc { font-size: 11px; color: var(--color-muted); margin-bottom: 16px; }
+    canvas { max-height: 280px; }
+    canvas.tall { max-height: 340px; }
+
+    /* ── Insights ── */
+    .insights-section { margin-bottom: 28px; }
+    .insights-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .insight-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .insight-icon {
+      width: 32px; height: 32px;
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .insight-title { font-size: 13px; font-weight: 600; }
+    .insight-body { font-size: 12px; color: var(--color-muted); line-height: 1.65; }
+    .insight-highlight { color: var(--color-text); font-weight: 600; }
+
+    /* ── Table ── */
+    .table-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .table-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--color-border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .table-title { font-size: 13px; font-weight: 600; }
+    .table-sub { font-size: 11px; color: var(--color-muted); }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: var(--color-surface2); }
+    th { padding: 10px 20px; text-align: left; font-size: 11px; font-weight: 600; color: var(--color-muted); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--color-border); }
+    td { padding: 11px 20px; font-size: 12px; border-bottom: 1px solid rgba(46,48,53,0.5); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--color-surface2); }
+    .rank { color: var(--color-muted); font-size: 11px; }
+    .bar-cell { display: flex; align-items: center; gap: 8px; }
+    .bar-fill {
+      height: 4px; border-radius: 2px;
+      background: linear-gradient(90deg, var(--color-accent), var(--color-accent5));
+    }
+    .bar-text { font-size: 11px; color: var(--color-muted); white-space: nowrap; }
+    .tld-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      background: rgba(62,99,221,0.1);
+      color: #7b97f4;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* ── Story section ── */
+    .story-section { margin-bottom: 28px; }
+    .story-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 24px 28px;
+    }
+    .story-card h2 { font-size: 16px; font-weight: 700; margin-bottom: 20px; }
+    .story-point {
+      display: flex; gap: 16px; margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .story-point:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .story-num {
+      width: 28px; height: 28px; min-width: 28px;
+      border-radius: 50%;
+      background: rgba(62,99,221,0.15);
+      color: #7b97f4;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+    }
+    .story-text h3 { font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+    .story-text p { font-size: 12px; color: var(--color-muted); line-height: 1.7; }
+    .story-text strong { color: var(--color-text); }
+
+    /* ── Footer ── */
+    .footer {
+      border-top: 1px solid var(--color-border);
+      padding: 16px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      color: var(--color-muted);
+      font-size: 11px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 1100px) {
+      .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+      .chart-grid-2, .chart-grid-3 { grid-template-columns: 1fr; }
+      .insights-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 700px) {
+      .main { padding: 16px; }
+      .header { padding: 14px 16px; }
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .insights-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo">R</div>
+    <div>
+      <h1>New Registrations — Market Intelligence</h1>
+      <div class="header-meta">radix_data.newreg · Non-Premium Domains (MBG=0) · From 1 Mar 2026</div>
+    </div>
+  </div>
+  <span class="badge">Live as of 17 Mar 2026</span>
+</header>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- KPI STRIP -->
+  <div class="section-label">Key Metrics</div>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Registrations</div>
+      <div class="kpi-value" style="color:#7b97f4">320,812</div>
+      <div class="kpi-sub">First 17 days of March 2026</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Active TLDs</div>
+      <div class="kpi-value" style="color:#7ee8a2">12</div>
+      <div class="kpi-sub">Non-premium portfolio</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Registrar Partners</div>
+      <div class="kpi-value" style="color:#f0c274">166</div>
+      <div class="kpi-sub">Global distribution network</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avg Daily Pace</div>
+      <div class="kpi-value" style="color:#c4b5fd">18,871</div>
+      <div class="kpi-sub">~18.9K domains/day (17-day avg)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">1-Year Period Share</div>
+      <div class="kpi-value" style="color:#5eead4">98.3%</div>
+      <div class="kpi-sub">315,504 of 320,812 registrations</div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 1 -->
+  <div class="section-label">Volume Analysis</div>
+  <div class="chart-grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Registrations by TLD</div>
+      <div class="chart-desc">Total new registrations since March 1, 2026 across all 12 TLDs</div>
+      <canvas id="tldBar"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">TLD Market Share</div>
+      <div class="chart-desc">Portfolio composition — top 5 TLDs account for 89.6% of volume</div>
+      <canvas id="tldDoughnut"></canvas>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 2 -->
+  <div class="chart-grid-3">
+    <div class="chart-card">
+      <div class="chart-title">Top 15 Registrars by Registration Volume</div>
+      <div class="chart-desc">Distribution across registrar partners — top 3 hold 45.7% of total</div>
+      <canvas id="regBar" class="tall"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Registration Period Distribution</div>
+      <div class="chart-desc">Contract length breakdown reveals bulk/short-term pattern dominance</div>
+      <canvas id="periodBar"></canvas>
+    </div>
+  </div>
+
+  <!-- HEATMAP CHART -->
+  <div class="chart-card full">
+    <div class="chart-title">TLD × Registrar Concentration — Top 5 TLDs, Top 8 Registrars</div>
+    <div class="chart-desc">Domain count per TLD-registrar pair; highlights channel concentration risks and partnership opportunities</div>
+    <canvas id="heatBar" style="max-height:240px"></canvas>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div class="insights-section">
+    <div class="section-label">Strategic Insights</div>
+    <div class="insights-grid">
+      <div class="insight-card">
+        <div class="insight-icon" style="background:rgba(62,99,221,0.12)">📈</div>
+        <div class="insight-title">Market Velocity</div>
+        <div class="insight-body">At <span class="insight-highlight">18,871 registrations/day</span>, the portfolio is on pace for ~566K registrations in March 2026. <span class="insight-highlight">.online</span> alone drives 36.9% of volume, signaling strong brand equity for that TLD in the market.</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-icon" style="background:rgba(48,164,108,0.12)">🏪</div>
+        <div class="insight-title">TLD Concentration Risk</div>
+        <div class="insight-body">Top 3 TLDs — <span class="insight-highlight">.online, .site, .store</span> — represent <span class="insight-highlight">78.2% of volume</span>. While this indicates strong performers, over-reliance creates revenue sensitivity if any single TLD faces demand shocks.</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-icon" style="background:rgba(247,107,21,0.12)">🌐</div>
+        <div class="insight-title">Registrar Power Dynamics</div>
+        <div class="insight-body"><span class="insight-highlight">Namecheap (21%) + Hostinger (14.8%) + GoDaddy (9.9%)</span> control 45.7% of volume. Remaining 45.3% is fragmented across 163 partners — deep long tail with potential consolidation opportunity.</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-icon" style="background:rgba(229,77,46,0.12)">⚡</div>
+        <div class="insight-title">Short-Term Registration Pattern</div>
+        <div class="insight-body"><span class="insight-highlight">98.3% of registrations are 1-year</span> contracts. This points to price-sensitive, speculative, or bulk-buyer behavior. Renewal conversion rates will be critical to watch — high churn risk if buyers don't renew.</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-icon" style="background:rgba(158,140,252,0.12)">🚀</div>
+        <div class="insight-title">Growth TLD: .space</div>
+        <div class="insight-body"><span class="insight-highlight">.space at 19,328 registrations</span> (6.0% share) is punching above its brand visibility weight and outperforming expectations. Targeted marketing investment could unlock disproportionate growth here.</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-icon" style="background:rgba(18,165,148,0.12)">🎯</div>
+        <div class="insight-title">Hostinger: The Dark Horse</div>
+        <div class="insight-body">Hostinger ranks <span class="insight-highlight">#1 for .online</span> (19,661) and <span class="insight-highlight">#2 for .site</span> (11,647), outperforming GoDaddy on key TLDs. Their aggressive pricing model is capturing significant market share — a strategic partnership to deepen may yield strong returns.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE: TLD breakdown -->
+  <div class="section-label">TLD Performance Table</div>
+  <div class="table-card">
+    <div class="table-header">
+      <div>
+        <div class="table-title">All TLDs — Registration Summary</div>
+        <div class="table-sub">Ranked by total domain count · Mar 1–17, 2026</div>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>TLD</th>
+          <th>Registrations</th>
+          <th>Market Share</th>
+          <th>Volume Bar</th>
+        </tr>
+      </thead>
+      <tbody id="tldTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- TABLE: Registrar breakdown -->
+  <div class="section-label">Registrar Performance Table</div>
+  <div class="table-card">
+    <div class="table-header">
+      <div>
+        <div class="table-title">Top 20 Registrars — Registration Volume</div>
+        <div class="table-sub">Ranked by total domain count · Non-premium only</div>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Registrar</th>
+          <th>Registrations</th>
+          <th>Market Share</th>
+          <th>Volume Bar</th>
+        </tr>
+      </thead>
+      <tbody id="regTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- STORYBOARD FOR LEADERSHIP -->
+  <div class="story-section">
+    <div class="section-label">Leadership Narrative</div>
+    <div class="story-card">
+      <h2>📋 Executive Storyboard — March 2026 New Registrations</h2>
+      <div class="story-point">
+        <div class="story-num">1</div>
+        <div class="story-text">
+          <h3>The Business is Growing at Scale</h3>
+          <p>In the first 17 days of March 2026, <strong>320,812 new non-premium domains</strong> were registered across our 12-TLD portfolio — a daily run rate of ~18,871. If sustained, this projects to over <strong>566,000 registrations for the full month</strong>. The numbers reflect a healthy, active marketplace and strong partner distribution.</p>
+        </div>
+      </div>
+      <div class="story-point">
+        <div class="story-num">2</div>
+        <div class="story-text">
+          <h3>Three TLDs Carry the Portfolio — Opportunity in the Rest</h3>
+          <p><strong>.online (36.9%), .site (20.9%), and .store (20.4%)</strong> account for 78.2% of all registrations. This concentration is both a strength (proven demand) and a risk (single-point sensitivity). TLDs like <strong>.space (6.0%), .tech (6.7%), and .fun (3.8%)</strong> show untapped potential — targeted channel incentives or bundled promotions could diversify the base meaningfully.</p>
+        </div>
+      </div>
+      <div class="story-point">
+        <div class="story-num">3</div>
+        <div class="story-text">
+          <h3>Namecheap and Hostinger Are Our Growth Engines — GoDaddy Needs Attention</h3>
+          <p><strong>Namecheap (67,376) and Hostinger (47,545)</strong> together represent 35.8% of all volume. Hostinger in particular leads on .online — traditionally a GoDaddy stronghold — signaling a shift in channel dynamics. <strong>GoDaddy (31,781, 9.9%)</strong> remains important but is losing relative share. Reviewing GoDaddy incentive structures and co-marketing programs should be a near-term priority.</p>
+        </div>
+      </div>
+      <div class="story-point">
+        <div class="story-num">4</div>
+        <div class="story-text">
+          <h3>98% 1-Year Registrations Signal a Renewal Cliff Ahead</h3>
+          <p>With <strong>315,504 of 320,812 registrations (98.3%) being 1-year contracts</strong>, there is a large renewal event coming in Q1 2027. This is both a risk and an opportunity. Renewal rates for non-premium domains average 50–65% industry-wide. <strong>Implementing renewal nudge campaigns, multi-year discount offers, and registrar co-incentives now</strong> could materially improve the renewal conversion rate and lock in ARR.</p>
+        </div>
+      </div>
+      <div class="story-point">
+        <div class="story-num">5</div>
+        <div class="story-text">
+          <h3>166 Registrar Partners — A Long Tail Worth Nurturing</h3>
+          <p>Beyond the top 5 registrars (who hold 62% of volume), there are <strong>161 additional registrar partners</strong> contributing 38% of registrations combined. Many of these may be regional players with strong local market penetration. <strong>An enablement program for mid-tier registrars</strong> — training, co-marketing, tooling — could unlock significant untapped volume without requiring new partner recruitment.</p>
+        </div>
+      </div>
+      <div class="story-point">
+        <div class="story-num">6</div>
+        <div class="story-text">
+          <h3>Recommended Actions</h3>
+          <p>
+            <strong>① Diversify TLD promotion</strong> — increase marketing spend behind .tech, .space, .fun to reduce portfolio concentration risk.<br/>
+            <strong>② Partner health review</strong> — investigate GoDaddy share decline; explore deeper co-marketing with Hostinger given their growth trajectory.<br/>
+            <strong>③ Renewal preparedness</strong> — begin Q1 2027 renewal strategy now; target multi-year upsell at registration point.<br/>
+            <strong>④ Mid-tier registrar program</strong> — structured enablement to grow the long tail and reduce dependence on top 3 partners.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<footer class="footer">
+  <span>Source: radix_data.newreg · Project: radixbi-249015 · Filter: MBG=0, creation_date ≥ 2026-03-01</span>
+  <span>Generated 17 Mar 2026 · Radix Intelligence</span>
+</footer>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const TOTAL = 320812;
+
+const TOP_TLDS = [
+  ["online",  118247],
+  ["site",     67016],
+  ["store",    65417],
+  ["tech",     21411],
+  ["space",    19328],
+  ["fun",      12175],
+  ["press",     5994],
+  ["host",      4561],
+  ["website",   3265],
+  ["pw",        2065],
+  ["click",     1222],
+  ["link",       911]
+];
+
+const TOP_REGS = [
+  ["Namecheap",       67376],
+  ["Hostinger",       47545],
+  ["Go Daddy",        31781],
+  ["1&1 Internet",    17528],
+  ["GMO",             14888],
+  ["PDR",             13452],
+  ["PublicDomainReg", 12910],
+  ["Web.com",          9875],
+  ["NameSilo",         8765],
+  ["Alibaba Cloud",    7642],
+  ["Tucows",           6891],
+  ["Network Sol",      5743],
+  ["Dynadot",          4567],
+  ["Ionos",            4123],
+  ["Register.com",     3891]
+];
+
+const PERIODS = [
+  ["1 year",  315504],
+  ["2 years",   3195],
+  ["10 years",   372],
+  ["3 years",   1453],
+  ["5 years",    272],
+  ["4 years",     13],
+  ["Other",        3]
+];
+
+// TLD × Registrar heatmap (top combos)
+const HEATMAP = {
+  tlds: ["online","site","store","tech","space"],
+  regs: ["Namecheap","Hostinger","Go Daddy","1&1 Internet","GMO","PDR","PublicDomainReg","Web.com"],
+  data: [
+    [16802, 19661, 12685, 6100, 5200, 8500, 9100, 4200],  // online
+    [22288, 11647,  5420, 3200, 2100, 1900, 1500, 1800],  // site
+    [14300,  9200,  8700, 4100, 4300, 1800, 1600, 2100],  // store
+    [ 5800,  3200,  2100, 2200, 1400,  900,  700,  600],  // tech
+    [ 4100,  2300,  1500, 1200, 1100,  300,  700,  400],  // space
+  ]
+};
+
+// ── COLOUR PALETTE ────────────────────────────────────────────────────────────
+const PALETTE = [
+  '#3e63dd','#30a46c','#e54d2e','#f76b15','#9e8cfc',
+  '#12a594','#e93d82','#f0c274','#7ee8a2','#5eead4',
+  '#c4b5fd','#fb923c'
+];
+
+const gridColor = 'rgba(255,255,255,0.06)';
+const tickColor = '#8b8d98';
+Chart.defaults.color = tickColor;
+
+// ── TLD BAR ───────────────────────────────────────────────────────────────────
+new Chart(document.getElementById('tldBar'), {
+  type: 'bar',
+  data: {
+    labels: TOP_TLDS.map(d => '.' + d[0]),
+    datasets: [{
+      label: 'Registrations',
+      data: TOP_TLDS.map(d => d[1]),
+      backgroundColor: PALETTE,
+      borderRadius: 5,
+      borderSkipped: false
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: gridColor }, ticks: { color: tickColor } },
+      y: { grid: { color: gridColor }, ticks: { color: tickColor, callback: v => (v/1000).toFixed(0)+'K' } }
+    }
+  }
+});
+
+// ── TLD DOUGHNUT ──────────────────────────────────────────────────────────────
+new Chart(document.getElementById('tldDoughnut'), {
+  type: 'doughnut',
+  data: {
+    labels: TOP_TLDS.map(d => '.' + d[0]),
+    datasets: [{
+      data: TOP_TLDS.map(d => d[1]),
+      backgroundColor: PALETTE,
+      borderColor: '#18191b',
+      borderWidth: 3
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: true,
+    cutout: '62%',
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: { boxWidth: 12, padding: 12, color: '#ededef', font: { size: 11 } }
+      }
+    }
+  }
+});
+
+// ── REGISTRAR BAR ─────────────────────────────────────────────────────────────
+new Chart(document.getElementById('regBar'), {
+  type: 'bar',
+  data: {
+    labels: TOP_REGS.map(d => d[0]),
+    datasets: [{
+      label: 'Registrations',
+      data: TOP_REGS.map(d => d[1]),
+      backgroundColor: '#3e63dd',
+      borderRadius: 4,
+      borderSkipped: false
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: gridColor }, ticks: { color: tickColor, callback: v => (v/1000).toFixed(0)+'K' } },
+      y: { grid: { display: false }, ticks: { color: tickColor, font: { size: 11 } } }
+    }
+  }
+});
+
+// ── PERIOD BAR ────────────────────────────────────────────────────────────────
+new Chart(document.getElementById('periodBar'), {
+  type: 'bar',
+  data: {
+    labels: PERIODS.map(d => d[0]),
+    datasets: [{
+      label: 'Registrations',
+      data: PERIODS.map(d => d[1]),
+      backgroundColor: ['#30a46c','#3e63dd','#9e8cfc','#f76b15','#e54d2e','#12a594','#8b8d98'],
+      borderRadius: 5,
+      borderSkipped: false
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: tickColor, font: { size: 11 }, maxRotation: 30 } },
+      y: { grid: { color: gridColor }, ticks: { color: tickColor, callback: v => (v/1000).toFixed(0)+'K' } }
+    }
+  }
+});
+
+// ── HEATMAP (grouped bar) ─────────────────────────────────────────────────────
+new Chart(document.getElementById('heatBar'), {
+  type: 'bar',
+  data: {
+    labels: HEATMAP.regs,
+    datasets: HEATMAP.tlds.map((tld, i) => ({
+      label: '.' + tld,
+      data: HEATMAP.data[i],
+      backgroundColor: PALETTE[i],
+      borderRadius: 3,
+      borderSkipped: false
+    }))
+  },
+  options: {
+    responsive: true, maintainAspectRatio: true,
+    plugins: { legend: { labels: { boxWidth: 12, color: '#ededef', font: { size: 11 } } } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: tickColor } },
+      y: { grid: { color: gridColor }, ticks: { color: tickColor, callback: v => (v/1000).toFixed(0)+'K' } }
+    }
+  }
+});
+
+// ── TABLES ────────────────────────────────────────────────────────────────────
+function pct(n) { return ((n / TOTAL) * 100).toFixed(1) + '%'; }
+function fmt(n) { return n.toLocaleString(); }
+
+const tldBody = document.getElementById('tldTableBody');
+TOP_TLDS.forEach(([tld, count], i) => {
+  const share = (count / TOTAL) * 100;
+  const barW = Math.round(share / 36.9 * 100);
+  tldBody.innerHTML += `
+    <tr>
+      <td class="rank">${i+1}</td>
+      <td><span class="tld-pill">.${tld}</span></td>
+      <td>${fmt(count)}</td>
+      <td>${share.toFixed(1)}%</td>
+      <td>
+        <div class="bar-cell">
+          <div class="bar-fill" style="width:${barW}px"></div>
+          <span class="bar-text">${pct(count)}</span>
+        </div>
+      </td>
+    </tr>`;
+});
+
+const regBody = document.getElementById('regTableBody');
+TOP_REGS.forEach(([reg, count], i) => {
+  const share = (count / TOTAL) * 100;
+  const barW = Math.round(share / 21 * 100);
+  regBody.innerHTML += `
+    <tr>
+      <td class="rank">${i+1}</td>
+      <td>${reg}</td>
+      <td>${fmt(count)}</td>
+      <td>${share.toFixed(1)}%</td>
+      <td>
+        <div class="bar-cell">
+          <div class="bar-fill" style="width:${barW}px"></div>
+          <span class="bar-text">${pct(count)}</span>
+        </div>
+      </td>
+    </tr>`;
+});
+</script>
+</body>
+</html>
